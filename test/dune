@@ -1,0 +1,2 @@
+(library (name Test) (public_name reason-conf-examples.test)
+    (libraries reason-conf-examples.library rely.lib) (flags -linkall -g)) 

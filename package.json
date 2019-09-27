@@ -1,0 +1,21 @@
+{
+  "name": "reason-conf-examples",
+  "version": "0.0.0",
+  "description": "My Project",
+  "esy": {
+    "build": "refmterr dune build"
+  },
+  "scripts": {
+    "test": "esy x RunReasonConfExamplesTests.exe"
+  },
+  "dependencies": {
+    "@opam/dune": "*",
+    "@esy-ocaml/reason": "*",
+    "refmterr": "*",
+    "ocaml": "4.7.x",
+    "@reason-native/rely": "*"
+  },
+  "devDependencies": {
+    "@opam/merlin": "*"
+  }
+}
