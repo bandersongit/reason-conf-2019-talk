@@ -1,2 +1,15 @@
-(library (name Test) (public_name reason-conf-examples.test)
-    (libraries reason-conf-examples.library rely.lib) (flags -linkall -g)) 
+(library 
+    (name Tests) 
+    (public_name reason-conf-examples.test)
+    (libraries reason-conf-examples.library rely.lib) 
+    (flags -linkall -g)
+    (modules :standard \ RunReasonConfExamplesTests)
+) 
+(executable
+    (name RunReasonConfExamplesTests)
+    (public_name RunReasonConfExamplesTests.exe)
+    (libraries
+        reason-conf-examples.test
+    )
+    (modules RunReasonConfExamplesTests)
+)

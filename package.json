@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "My Project",
   "esy": {
-    "build": "refmterr dune build"
+    "build": "refmterr dune build --profile=release"
   },
   "scripts": {
     "test": "esy x RunReasonConfExamplesTests.exe"

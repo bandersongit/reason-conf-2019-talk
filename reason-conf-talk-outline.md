@@ -60,34 +60,51 @@ So of the methods we tested, the proof showed that for all natural numbers, fact
 
 The biggest problem with just proving everything, is cost. Proofs take time to write and verify. Additionally as they are based on the direct analysis of source code, they are difficult to maintain when the code changes as a change to the code generally means a change in the proof. 
 
-That said formal proofs are currently employed extensively in academic papers and in embedded systems environments. Computer assisted proofs have helped make some breakthroughs in mathematically probably most famously for the Four color theorem. I could see a day where we had some level of automatic proof generation or verification integrated into common industry practices. The good folks at Inria have a language/proof asistant called coq available as well that can interact with , Haskell, Scala, and ocaml (and hence also Reason). I haven't worked with it, but if you are interested in learning more, you should check it out.
+That said formal proofs are currently employed extensively in academic papers and in embedded systems environments. Computer assisted proofs have helped make some breakthroughs in theoretical mathematics. The most famous example of this is the proof of the Four color theorem. I could see a day where we had some level of automatic proof generation or verification integrated into common industry practices. The good folks at Inria have a language/proof asistant called coq available as well that can interact with , Haskell, Scala, and ocaml (and hence also Reason). I haven't worked with it, but if you are interested in learning more, you should check it out.
 
-So why do we tend to test instead of doing these other things? It is because testing as a discipline can be an extremely effeccient and effective means of establishing confidence in the face of evolving requirements and constant refactoring.
-
-Tests can depend on higher level abstractions than formal proofs of correctness, and provide a more expressive way to describe desired behavior than can be reasonably accomplished with types alone in most scenarios.
 
 ## On the value of testing
 
+So why do we tend to test instead of doing these other things? It is because testing as a discipline can be an extremely efficient and effective means of establishing confidence in the face of evolving requirements and constant refactoring.
+
+Tests can depend on higher level abstractions than formal proofs of correctness, and provide a more expressive way to describe desired behavior than can be reasonably accomplished with types alone in most scenarios.
+
 Testing is a very broad subject and there are many different kinds of tests. Unit tests (which some people use to refer to all tests), integration tests, e2e tests, performance tests, service tests, and manual testing are just some examples.
 
-## A note on pyramids
-Who here has heard of the testing pyramid?
-(Insert testing pyramid picture)
-
-So this is a heuristic that was first introduced by Mike Cohn around 2009. The notion was that as you go higher up in the pyramid, tests became more expensive to write and more prone to breakage.
-
-However these assumptions don't always hold. In recent years advances in UI technologies and testing frameworks have made UI/Integration/E2E testing cheaper than it has been before. Additionally unit tests tend to depend on implementation details, and can suffer from looking like the code they are testing. Also what we really care about is the behavior that the user ends up seeing. If you have a bunch of perfectly good components, but they don't fit together, then you have some problems.
-
-> Write tests. Not too many. Mostly integration. (Guillermo Rauch) Dec. 2016
-
-This was tweeted not much later, and Kent C. Dodds gave an excellent talk at Assert(JS) on this very topic where he introduced his own geometric testing device, the testing trophy, which reflects both the cheapening and the value of integration tests. This is also something that inspired me to think of the role of type systems in testing, a subject that we touched on briefly already and will return to later.
-
 Because there is so much complexity in the world of testing, and the relative value and costs vary so wildly by situation, it is important to understand how to analyze your unique situation. I am going to walk through the framework that I use when evaluating individual tests, thinking about how to test a system or feature, and when maintaining existing tests.
+
+## A note on pyramids
+Who here has seen this before?
+
+This isn’t the framework I just alluded to, but I think it’s important to talk about because I find that this is one of the first things that come to mind when people think of testing. 
+
+This is a heuristic that was first introduced by Mike Cohn in his book Succeeding with Agile which was published in 2009. The basic notion was that as you go higher up in the pyramid, tests became more expensive to write and more prone to breakage.
+
+However these assumptions don't always hold. In recent years advances in UI technologies and testing frameworks have made UI/Integration/E2E testing cheaper than it has been before. 
+
+### But what about unit tests?
+Unit tests do certainly have their place. If I am writing a complex bit of logic, I will certainly write a unit test. However Reason and the functional style make it easier to not write tests in a lot of situations due to the prevalence of function composition and pattern matching. In general if test would look similar to the code I'm writing or I am confident that it is trivial, I skip the unit test. This does not necessarily mean sacrificing on code coverage, which I think is a flawed, but useful metric. I believe the goal should be that every piece of behavior or business rule should be specified in some kind of test. If we are adhering to this standard, code coverage should naturally be high, even without unit tests. Code coverage can give an approximation of this goal, but ultimately it is our responsibility to continuously make this kind of evaluation and encourage our teammates to do the same.
+
+
+## Testing trophy
+This is a more modern geometric representation of the testing hierarchy. KCD gave a talk at Assert(JS) entitled "Write tests. Not too many. Mostly integration". This title was borrowed on a 2016 tweet by Guillermo Rauch.
+
+This testing shape reflects both the cheapening and the value of integration tests. There is also this bit at the bottom, which refers to the value is added by a static type system. In the context of Kent's talk and associated article, this is Flow, however Reason has quite a bit more to add in this regard.
+ 
+
+## What if our types enforced our business logic?
+Frameworks and languages go a long way to determining the amount of work needed to test your code as well. Stronger type guarantees can reduce the need for unit tests due to rendering certain types of errors (nulls) impossible out of the box. But we can do better still. You can strive to encode your high level business rules into the types you use in your application. By doing this, we are making the compiler dynamicalily prove that some properties that we care about hold!
+
+User example
+
+## Rely lifecycle methods
+This is a real example of this principle in practice. Like Jest, Rely has the beforeEach, afterEach, beforeAll, and afterAll lifecycle events. Unlike Jest, these functions can return values that can be later referenced in a safe way for user in tests and to perform teardown operations. Consequently, we need them to be called in a certain order. For example the return value of beforeEach is passed as an argument to afterEach, so we have this requirement that beforeEach must be called before afterEach. I encoded this requirement into the actual types of these functions, and if you break this invariant, you actually get a compiler error that looks like this.
+
 
 ## Cost vs. value
 "Price is what you pay; value is what you get." - Warren Buffet
 
-When assessing the efficacy of a particular test or set of tests, I look at what value is generated by the test or tests, and what the costs of them are.
+As for the rest of the pyramid, we have already established that the costs associated with different types of tests, are not constant. When assessing the efficacy of a particular test or set of tests, I look at what value is generated by the test or tests, and what the costs of them are in the specific context that I am dealing with.
 
 Components:
 
@@ -113,10 +130,8 @@ Upfront investment - How much time is it going to take to add this test? Will wr
 
 We write software to solve problems for users. The thing we care about is that users are actually able to use the software as intended. That should be the highest priority at basically all times. Unit tests are great for ensuring that little pieces work, but it is the integration and e2e tests that make sure we are actually solving the problems we care about. Focusing on relevance also pays maintainability dividends. By focusing on the high level behavior application instead of implementation details, your tests are more resilient to changes in details that do not change high level behavior.
 
-This does not necessarily mean sacrificing on things like code coverage, which I think is a flawed, but useful metric. I believe the goal should be that every piece of behavior or business rule should be specified in some kind of test. Code coverage can give an approximation of this, but ultimately it is our responsibility to continously make this kind of evaluation and encourage our teammates to do the same.
+Unit tests tend to depend on implementation details and as a result can fair quite poorly by this metric. 
 
-### But, unit tests!
-Unit tests do certainly have their place. If I am writing a complex bit of logic, I will certainly write a unit test. However Reason and the functional style make it easier to not write tests in a lot of situations due to the prevalence of function composition and pattern matching. In general if test would look similar to the code I'm writing or I am confident that it is trivial, I skip the unit test.
 
 
 ## Diagnostic value
@@ -154,11 +169,6 @@ In general you should strive for cyclomatic complexity (# of code paths) of exac
 ## Upfront investment
 Writing tests can take a lot of time. Especially if your codebase is lacking in test utilities. What we just talked about in terms of robustness and maintainability can go a long way to reducing the incremental investment needed for adding each test. Identifying these high level patterns and utilities and building them is generally a sound investment.
 
-Frameworks and languages go a long way to determining the amount of work needed to test your code as well. Stronger type guarantees can reduce the need for unit tests due to rendering certain types of errors (nulls) impossible out of the box. But we can do better still. You can strive to encode your high level business rules into the types you use in your application. By doing this, we are making the compiler dynamicalily prove that some properties that we care about hold!
-
-User example
-
-Rely lifecycle methods
 
 ## Thanks
 Reason-native
