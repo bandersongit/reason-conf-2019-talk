@@ -1,42 +1,13 @@
 # reason-conf-examples
+This repository contains the examples and notes for the "Investing in Testing (with Reason)" talk that I gave at Reason Conf on October 7, 2019 in Chicago.
 
-
-[![CircleCI](https://circleci.com/gh/yourgithubhandle/reason-conf-examples/tree/master.svg?style=svg)](https://circleci.com/gh/yourgithubhandle/reason-conf-examples/tree/master)
-
-
-**Contains the following libraries and executables:**
-
-```
-reason-conf-examples@0.0.0
-│
-├─test/
-│   name:    TestReasonConfExamples.exe
-│   require: reason-conf-examples/library
-│
-├─library/
-│   library name: reason-conf-examples/library
-│   require:
-│
-└─executable/
-    name:    ReasonConfExamplesApp.exe
-    require: reason-conf-examples/library
-```
-
-## Developing:
+## Installation and build:
 
 ```
 npm install -g esy
 git clone <this-repo>
 esy install
 esy build
-```
-
-## Running Binary:
-
-After building the project, you can run the main binary that is produced.
-
-```
-esy x ReasonConfExamplesApp.exe 
 ```
 
 ## Running Tests:
