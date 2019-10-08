@@ -1,16 +1,22 @@
 # Investing in Testing With Reason
 
+I want you to come away from this talk with an understanding of the principles behind why we write tests and the ability to apply these principles in order to efficiently and effectively write software that will address your users’ needs. We will cover high level topics and a few specific strategies, some of which Reason is especially well suited to. However these ideas are by no means constrained to any particular programming language or paradigm.
+
 ## Why do we test?
-I believe the fundamental reason that we write tests is that we want to be confident that our code does what it says it does. We want this confidence because our goal is to solve the users’ problems and if our code doesn’t solve the users’ problems, we lose their trust and they will look for other solutions.
+ I believe the fundamental reason that we write tests is that we want to be confident that our code does what it says it does. We want this confidence because our goal is to solve the users’ problems and if our code doesn’t solve the users’ problems, we lose their trust and they will look for other solutions.
 
 It is important to note that this confidence can come from other possible sources. If we want to be as confident as possible, then the gold standard is a formal mathematical proof. If we were to write formal proofs for our code we would have absolute confidence.
 
-A type system in some ways offers a notion of “automated proof”. By this I don’t mean “if it compiles it works”, but I do mean that by making certain types of errors syntactically impossible, we can be sure that they do not occur in our code. Understanding what your type system can offer in terms of guarantees and designing your types to reflect your business logic can go a long way towards building confidence in your code. 
+A type system in some ways offers a notion of “automated proof”. By this I don’t mean “if it compiles it works”, but I do mean that by making certain types of errors semantically impossible, we can be sure that they do not occur in our code. Understanding what your type system can offer in terms of guarantees and designing your types to reflect your business logic can go a long way towards building confidence in your code.
+
 
 ## Testing as a means of establishing confidence
 > “Testing proves the presence of bugs, not the absence of bugs” - Edsger Dijkstra
 
-As opposed to formal proofs and the use of type checkers, testing provides empirical validation of highly specific scenarios. To illustrate the difference between these methods, consider this factorial function:
+It’s important to understand what tests can and cannot do. As opposed to formal proofs and the use of type checkers, testing provides empirical validation of highly specific scenarios. We are generally only demonstrating particular instances of a more general proposition that we would like to be true. To illustrate the difference between testing, proofs, and types, consider the factorial function.
+
+You might recall from math class that this is a function that is defined recursively. 0! = 1, and n! = n * (n-1)!
+
 
 ```reason
 let rec factorial = (n) => {
@@ -62,10 +68,22 @@ The biggest problem with just proving everything, is cost. Proofs take time to w
 
 That said formal proofs are currently employed extensively in academic papers and in embedded systems environments. Computer assisted proofs have helped make some breakthroughs in theoretical mathematics. The most famous example of this is the proof of the Four color theorem. I could see a day where we had some level of automatic proof generation or verification integrated into common industry practices. The good folks at Inria have a language/proof asistant called coq available as well that can interact with , Haskell, Scala, and ocaml (and hence also Reason). I haven't worked with it, but if you are interested in learning more, you should check it out.
 
+## What if our types enforced our business logic?
+Frameworks and languages go a long way to determining the amount of work needed to test your code as well. Stronger type guarantees can reduce the need for unit tests due to rendering certain types of errors (nulls) impossible out of the box. But we can do better still. You can strive to encode your high level business rules into the types you use in your application. By doing this, we are making the compiler dynamicalily prove that some properties that we care about hold!
+
+
+## Money example
+
+For example, consider the problem of operating on money. Money types typically has some amount associated with it, and, importantly, that amount is relative to a particular currency. We generally want to guarantee that when paying for something, or combining funds, that we are operating on quantities with the same currency. This is something that you might think to guard against with a precondition and unit tests, however with some intentional type design, we can make it so that erroneous code doesn’t even compile. Furthermore the guarantee we get here is *stronger* than the guarantee we get with the unit test. The unit test might say that we can’t add a dollar and a euro, the type annotation says that we can only add money of the same type.
+
+## Rely lifecycle methods
+This is a real example of this principle in practice. Like Jest, Rely has the beforeEach, afterEach, beforeAll, and afterAll lifecycle events. Unlike Jest, these functions can return values that can be later referenced in a safe way for user in tests and to perform teardown operations. Consequently, we need them to be called in a certain order. For example the return value of beforeEach is passed as an argument to afterEach, so we have this requirement that beforeEach must be called before afterEach. I encoded this requirement into the actual types of these functions using something called phantom types, and if you break this invariant, you actually get a compiler error that looks like this.
 
 ## On the value of testing
 
-So why do we tend to test instead of doing these other things? It is because testing as a discipline can be an extremely efficient and effective means of establishing confidence in the face of evolving requirements and constant refactoring.
+The software we write has constantly evolving demands which means that our code needs to grow and to change. This change is healthy, but we want to be able to maintain our confidence in spite of it.
+
+Testing as a discipline can be an extremely efficient and effective means of establishing confidence in the face of evolving requirements and constant refactoring.
 
 Tests can depend on higher level abstractions than formal proofs of correctness, and provide a more expressive way to describe desired behavior than can be reasonably accomplished with types alone in most scenarios.
 
@@ -90,16 +108,6 @@ Unit tests do certainly have their place. If I am writing a complex bit of logic
 This is a more modern geometric representation of the testing hierarchy. KCD gave a talk at Assert(JS) entitled "Write tests. Not too many. Mostly integration". This title was borrowed on a 2016 tweet by Guillermo Rauch.
 
 This testing shape reflects both the cheapening and the value of integration tests. There is also this bit at the bottom, which refers to the value is added by a static type system. In the context of Kent's talk and associated article, this is Flow, however Reason has quite a bit more to add in this regard.
- 
-
-## What if our types enforced our business logic?
-Frameworks and languages go a long way to determining the amount of work needed to test your code as well. Stronger type guarantees can reduce the need for unit tests due to rendering certain types of errors (nulls) impossible out of the box. But we can do better still. You can strive to encode your high level business rules into the types you use in your application. By doing this, we are making the compiler dynamicalily prove that some properties that we care about hold!
-
-User example
-
-## Rely lifecycle methods
-This is a real example of this principle in practice. Like Jest, Rely has the beforeEach, afterEach, beforeAll, and afterAll lifecycle events. Unlike Jest, these functions can return values that can be later referenced in a safe way for user in tests and to perform teardown operations. Consequently, we need them to be called in a certain order. For example the return value of beforeEach is passed as an argument to afterEach, so we have this requirement that beforeEach must be called before afterEach. I encoded this requirement into the actual types of these functions, and if you break this invariant, you actually get a compiler error that looks like this.
-
 
 ## Cost vs. value
 "Price is what you pay; value is what you get." - Warren Buffet
